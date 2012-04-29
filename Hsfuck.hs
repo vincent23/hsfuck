@@ -1,4 +1,4 @@
-module Main( main ) where
+module Hsfuck where
 import System.Environment ( getArgs )
 import Data.Char( ord, chr )
 import Data.Array.IO
