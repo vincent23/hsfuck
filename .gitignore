@@ -2,3 +2,5 @@
 *.hi
 .*.swp
 hsfuck
+cabal-dev
+dist
