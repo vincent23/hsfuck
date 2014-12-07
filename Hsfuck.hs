@@ -5,8 +5,6 @@ import Data.Array.IO
 import System.IO
 import Data.Array.Unboxed
 import qualified Control.Monad.State as State
-import Data.IntMap (IntMap)
-import qualified Data.IntMap as IntMap
 import Data.Maybe (mapMaybe)
 import Data.List (foldl')
 
@@ -31,7 +29,7 @@ data BFState = BFState {
     pc :: {-# UNPACK #-} !Int,
     dataIndex :: {-# UNPACK #-} !Int,
     memory :: IOUArray Int Int,
-    jumpTargets :: IntMap Int
+    jumpTargets :: UArray Int Int
 }
 instance Show BFState where
     show (BFState _ pc' dataIndex' _ _) = show pc' ++ " " ++ show dataIndex' ++ " "
@@ -58,8 +56,8 @@ optGroup = reverse . foldl' f []
           f (Move x:xs) (Move y) = Move (x+y):xs
           f xs x = x:xs
 
-bracketJumps :: [Instruction] -> IntMap Int
-bracketJumps = (IntMap.fromList . snd) . foldl' f ([], []) . zip [0..]
+bracketJumps :: [Instruction] -> UArray Int Int
+bracketJumps instructions = ((array (0, length instructions - 1)) . snd) . foldl' f ([], []) . zip [0..] $ instructions
     where f (stack, acc) (left, StartLoop) = (left:stack, acc)
           f (left:stack, acc) (right, EndLoop) = (stack, (left, right):(right,left):acc)
           f x _ = x
@@ -99,7 +97,7 @@ isEnd state = pc state > (snd . bounds . program) state
 
 bracketJump :: BFState -> BFState
 {-# INLINE bracketJump #-}
-bracketJump state = state {pc = jumpTargets state IntMap.! pc state}
+bracketJump state = state {pc = jumpTargets state ! pc state}
 
 next :: State.StateT BFState IO ()
 next = do state <- State.get
